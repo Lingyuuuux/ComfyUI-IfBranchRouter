@@ -9,14 +9,6 @@ except Exception:
 
 
 MAX_BRANCHES = 32
-CONDITION_TYPES = {"INT", "STRING"}
-_PASSTHROUGH_UNSET = object()
-
-
-def _split_input_types(type_name):
-    if type_name is None:
-        return set()
-    return {part.strip().upper() for part in str(type_name).split(",") if part.strip()}
 
 
 def _parse_conditions(raw):
@@ -163,11 +155,6 @@ class IfBranchRouter:
 
     @classmethod
     def VALIDATE_INPUTS(cls, input_types):
-        condition_types = _split_input_types(input_types.get("condition"))
-        if not condition_types:
-            return "condition input is required."
-        if not condition_types & CONDITION_TYPES:
-            return "condition must be connected to an INT or STRING output."
         return True
 
     def route(
@@ -177,7 +164,7 @@ class IfBranchRouter:
         conditions_json='["0", "1"]',
         string_trim=False,
         case_sensitive=True,
-        passthrough=_PASSTHROUGH_UNSET,
+        passthrough=None,
     ):
         conditions = _parse_conditions(conditions_json)
         selected = len(conditions)
@@ -187,7 +174,7 @@ class IfBranchRouter:
                 selected = index
                 break
 
-        payload = condition if passthrough is _PASSTHROUGH_UNSET else passthrough
+        payload = condition if passthrough is None else passthrough
         outputs = [ExecutionBlocker(None) for _ in range(MAX_BRANCHES + 1)]
         outputs[selected] = payload
         return tuple(outputs)
